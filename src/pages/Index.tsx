@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { PlatformCard } from '@/components/PlatformCard';
 import { BlockTimer } from '@/components/BlockTimer';
 import { HabitTracker } from '@/components/HabitTracker';
 import { OTPUnlock } from '@/components/OTPUnlock';
+import { AppBlockingService } from '@/services/AppBlockingService';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
@@ -18,6 +18,7 @@ const Index = () => {
   const [blockEndTime, setBlockEndTime] = useState<Date | null>(null);
   const [showOTP, setShowOTP] = useState(false);
   const [blockDuration, setBlockDuration] = useState(1); // hours
+  const [hasPermissions, setHasPermissions] = useState(false);
   const { toast } = useToast();
 
   const platforms = [
@@ -28,6 +29,22 @@ const Index = () => {
     { id: 'twitter', name: 'Twitter/X', icon: '🐦', color: 'bg-gradient-to-br from-sky-400 to-sky-600' },
     { id: 'snapchat', name: 'Snapchat', icon: '👻', color: 'bg-gradient-to-br from-yellow-400 to-yellow-500' }
   ];
+
+  useEffect(() => {
+    checkPermissions();
+  }, []);
+
+  const checkPermissions = async () => {
+    const granted = await AppBlockingService.requestPermissions();
+    setHasPermissions(granted);
+    if (!granted) {
+      toast({
+        title: "Permissions Required",
+        description: "Please grant accessibility permissions to block apps.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handlePlatformToggle = (platformId: string) => {
     setSelectedPlatforms(prev => 
@@ -56,7 +73,7 @@ const Index = () => {
     }
   };
 
-  const startBlock = () => {
+  const startBlock = async () => {
     if (selectedPlatforms.length === 0) {
       toast({
         title: "No platforms selected",
@@ -66,15 +83,34 @@ const Index = () => {
       return;
     }
 
-    const endTime = new Date();
-    endTime.setHours(endTime.getHours() + blockDuration);
-    setBlockEndTime(endTime);
-    setIsBlocked(true);
+    if (!hasPermissions) {
+      toast({
+        title: "Permissions Required",
+        description: "Please grant accessibility permissions first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await AppBlockingService.blockPlatforms(selectedPlatforms, blockDuration);
     
-    toast({
-      title: "Block activated! 🛡️",
-      description: `Selected platforms blocked for ${blockDuration} hour${blockDuration > 1 ? 's' : ''}`,
-    });
+    if (success) {
+      const endTime = new Date();
+      endTime.setHours(endTime.getHours() + blockDuration);
+      setBlockEndTime(endTime);
+      setIsBlocked(true);
+      
+      toast({
+        title: "Block activated! 🛡️",
+        description: `Selected platforms are now blocked for ${blockDuration} hour${blockDuration > 1 ? 's' : ''}`,
+      });
+    } else {
+      toast({
+        title: "Block failed",
+        description: "Unable to activate app blocking. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBlockEnd = () => {
@@ -82,13 +118,23 @@ const Index = () => {
     setShowOTP(true);
   };
 
-  const handleOTPSuccess = () => {
-    setShowOTP(false);
-    setBlockEndTime(null);
-    toast({
-      title: "Welcome back! 👋",
-      description: "Remember to use your time mindfully.",
-    });
+  const handleOTPSuccess = async () => {
+    const success = await AppBlockingService.unblockPlatforms(selectedPlatforms);
+    
+    if (success) {
+      setShowOTP(false);
+      setBlockEndTime(null);
+      toast({
+        title: "Welcome back! 👋",
+        description: "Apps have been unblocked. Use them mindfully!",
+      });
+    } else {
+      toast({
+        title: "Unblock failed",
+        description: "Unable to unblock apps. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const allPlatformIds = platforms.map(p => p.id);

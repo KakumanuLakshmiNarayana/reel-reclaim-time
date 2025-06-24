@@ -1,8 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { AppBlockingService } from '@/services/AppBlockingService';
 
 interface Platform {
   id: string;
@@ -16,6 +16,17 @@ interface HabitTrackerProps {
 }
 
 export const HabitTracker: React.FC<HabitTrackerProps> = ({ platforms }) => {
+  const [usageStats, setUsageStats] = useState<Array<{ platform: string, timeSpent: number }>>([]);
+
+  useEffect(() => {
+    loadUsageStats();
+  }, []);
+
+  const loadUsageStats = async () => {
+    const stats = await AppBlockingService.getUsageStats();
+    setUsageStats(stats);
+  };
+
   // Mock data for demonstration
   const weeklyData = [
     { day: 'Mon', blocked: 3, used: 1 },
