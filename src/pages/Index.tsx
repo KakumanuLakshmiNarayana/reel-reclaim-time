@@ -37,6 +37,25 @@ const Index = () => {
     );
   };
 
+  const handleBlockAll = () => {
+    const allPlatformIds = platforms.map(p => p.id);
+    const areAllSelected = allPlatformIds.every(id => selectedPlatforms.includes(id));
+    
+    if (areAllSelected) {
+      setSelectedPlatforms([]);
+      toast({
+        title: "All platforms deselected",
+        description: "No platforms are currently selected for blocking.",
+      });
+    } else {
+      setSelectedPlatforms(allPlatformIds);
+      toast({
+        title: "All platforms selected! 🎯",
+        description: "All social media platforms are now selected for blocking.",
+      });
+    }
+  };
+
   const startBlock = () => {
     if (selectedPlatforms.length === 0) {
       toast({
@@ -72,6 +91,9 @@ const Index = () => {
     });
   };
 
+  const allPlatformIds = platforms.map(p => p.id);
+  const areAllSelected = allPlatformIds.every(id => selectedPlatforms.includes(id));
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="container mx-auto px-4 py-8 max-w-md">
@@ -105,10 +127,20 @@ const Index = () => {
                   {/* Platform Selection */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <span>📱</span>
-                        Select Platforms to Block
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <span>📱</span>
+                          Select Platforms to Block
+                        </CardTitle>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleBlockAll}
+                          className="text-xs"
+                        >
+                          {areAllSelected ? 'Deselect All' : 'Block All'}
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {platforms.map(platform => (
