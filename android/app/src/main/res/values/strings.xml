@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FocusGuard</string>
+    <string name="accessibility_service_description">FocusGuard uses accessibility services to block distracting apps during your focus sessions. This allows the app to monitor which apps are being opened and prevent access to blocked social media platforms.</string>
+</resources>
